@@ -134,10 +134,89 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
 
+  /* Mobile sidebar toggle — hidden on desktop */
+  .mobile-weeks-toggle { display: none; }
+
   @media (max-width: 640px) {
+    /* Header */
+    .header { padding: 18px 16px 14px; }
+    .header h1 { font-size: 22px; }
+    .header-meta { font-size: 10px; }
+    .header-stats { gap: 8px; }
+    .stat-pill { padding: 6px 10px; }
+    .stat-pill .val { font-size: 16px; }
+    .stat-pill .lbl { font-size: 9px; }
+    .btn-today { font-size: 10px; padding: 7px 12px; }
+
+    /* Progress + tabs */
+    .progress-wrap { padding: 10px 16px; }
+    .phase-tabs { padding: 10px 12px 0; gap: 4px; }
+    .phase-tab { padding: 6px 10px; font-size: 10px; }
+
+    /* Mobile weeks toggle */
+    .mobile-weeks-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mobile-weeks-toggle:active { background: var(--surface); }
+
+    /* Sidebar collapses by default on mobile */
     .main { grid-template-columns: 1fr; }
-    .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 220px; }
-    .header h1 { font-size: 24px; }
+    .sidebar {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      max-height: 0;
+      overflow: hidden;
+      padding: 0;
+      transition: max-height 0.3s ease;
+    }
+    .sidebar.mobile-open {
+      max-height: 300px;
+      padding: 8px 0;
+      overflow-y: auto;
+    }
+
+    /* Content */
+    .content { padding: 16px; }
+    .week-header { margin-bottom: 14px; }
+    .week-title { font-size: 18px; }
+    .week-title small { font-size: 11px; }
+    .week-summary { gap: 12px; padding: 12px; }
+    .sum-item .sum-val { font-size: 15px; }
+
+    /* Day cards */
+    .day-card { padding: 12px; }
+    .day-top { gap: 6px; }
+    /* Description always on its own line on mobile */
+    .day-desc { min-width: 100%; font-size: 12px; margin-top: 2px; }
+
+    /* Log inputs */
+    .day-actions { gap: 8px; }
+    .log-area { gap: 6px; }
+    .log-input { width: 72px; }
+    .log-note { min-width: 0; flex: 1 1 100%; }
+
+    /* Larger touch target for Mark Done */
+    .btn-done { padding: 10px 16px; width: 100%; text-align: center; min-height: 40px; }
+
+    .empty-state .big { font-size: 36px; }
+  }
+
+  @media (max-width: 380px) {
+    .header h1 { font-size: 19px; }
+    .stat-pill .val { font-size: 14px; }
+    .phase-tab { padding: 5px 8px; font-size: 9px; }
   }
 </style>
 </head>
@@ -164,6 +243,11 @@
 </div>
 
 <div class="phase-tabs" id="phaseTabs"></div>
+
+<div class="mobile-weeks-toggle" id="mobileWeeksToggle" onclick="toggleMobileSidebar()">
+  <span id="mobileWeeksLabel">▼ All weeks</span>
+  <span id="mobileWeeksActive"></span>
+</div>
 
 <div class="main">
   <div class="sidebar" id="sidebar"></div>
@@ -462,6 +546,10 @@ function selectWeek(num) {
   renderSidebar();
   renderWeek(num);
   renderPhaseTabs();
+  // Update mobile active indicator and close sidebar
+  const activeEl = document.getElementById('mobileWeeksActive');
+  if (activeEl) activeEl.textContent = `W${num}`;
+  if (window.innerWidth <= 640) closeMobileSidebar();
 }
 
 function goToToday() {
@@ -544,6 +632,22 @@ function switchPhase(phaseId) {
   const firstWeek = weeks.find(w => w.phase === phaseId);
   if (firstWeek) selectWeek(firstWeek.num);
   else renderPhaseTabs();
+}
+
+// ── Mobile sidebar toggle ─────────────────────────────────────────────────
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const label = document.getElementById('mobileWeeksLabel');
+  sidebar.classList.toggle('mobile-open');
+  label.textContent = sidebar.classList.contains('mobile-open') ? '▲ All weeks' : '▼ All weeks';
+}
+
+function closeMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar.classList.contains('mobile-open')) {
+    sidebar.classList.remove('mobile-open');
+    document.getElementById('mobileWeeksLabel').textContent = '▼ All weeks';
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
