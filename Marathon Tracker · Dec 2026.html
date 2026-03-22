@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<!-- saved from url=(0054)file:///Users/danislou/Downloads/marathon_tracker.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marathon Tracker · Dec 2026</title>
+<link href="./Marathon Tracker · Dec 2026_files/css2" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f0e;
+    --surface: #161714;
+    --surface2: #1d1e1b;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8e6df;
+    --muted: #7a7870;
+    --accent: #c8f060;
+    --accent-dim: rgba(200,240,96,0.12);
+    --accent-dim2: rgba(200,240,96,0.22);
+    --phase1: #4ade80; --phase1-bg: rgba(74,222,128,0.1);
+    --phase2: #60a5fa; --phase2-bg: rgba(96,165,250,0.1);
+    --phase3: #fbbf24; --phase3-bg: rgba(251,191,36,0.1);
+    --phase4: #f87171; --phase4-bg: rgba(248,113,113,0.1);
+    --phase5: #a78bfa; --phase5-bg: rgba(167,139,250,0.1);
+    --easy: #4ade80; --tempo: #fbbf24; --long: #f87171; --speed: #60a5fa; --rest: #6b7280;
+    --r: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; }
+
+  /* Header */
+  .header { padding: 32px 24px 20px; border-bottom: 1px solid var(--border); }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .header h1 { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 600; letter-spacing: -0.5px; line-height: 1.1; }
+  .header h1 span { color: var(--accent); font-style: italic; }
+  .header-meta { font-size: 11px; color: var(--muted); margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .header-stats { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .stat-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; text-align: center; }
+  .stat-pill .val { font-size: 20px; font-weight: 500; color: var(--accent); }
+  .stat-pill .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+  .btn-today { padding: 8px 16px; border-radius: 8px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid var(--accent); background: var(--accent-dim2); color: var(--accent); font-family: 'DM Mono', monospace; transition: all 0.15s; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
+  .btn-today:hover { background: var(--accent); color: var(--bg); }
+
+  /* Progress bar */
+  .progress-wrap { padding: 16px 24px; border-bottom: 1px solid var(--border); }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .progress-track { height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.6s ease; }
+
+  /* Phase tabs */
+  .phase-tabs { display: flex; gap: 4px; padding: 16px 24px 0; overflow-x: auto; }
+  .phase-tab { padding: 7px 14px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; white-space: nowrap; letter-spacing: 0.03em; background: var(--surface2); color: var(--muted); }
+  .phase-tab:hover { color: var(--text); }
+  .phase-tab.active { color: var(--bg); background: var(--accent); }
+  .phase-tab .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; }
+
+  /* Main layout */
+  .main { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 220px); }
+  .sidebar { border-right: 1px solid var(--border); padding: 16px 0; overflow-y: auto; }
+  .week-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; transition: background 0.1s; border-left: 2px solid transparent; }
+  .week-item:hover { background: var(--surface2); }
+  .week-item.active { background: var(--surface2); border-left-color: var(--accent); }
+  .week-item.completed { opacity: 0.6; }
+  .week-item.current-week { }
+  .week-num { font-size: 11px; color: var(--muted); min-width: 28px; }
+  .week-label { flex: 1; }
+  .week-label .wname { font-size: 12px; font-weight: 500; }
+  .week-label .wkm { font-size: 11px; color: var(--muted); }
+  .week-check { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .week-check.done { background: var(--accent); border-color: var(--accent); color: var(--bg); font-size: 10px; }
+  .week-check.partial { border-color: var(--accent); background: var(--accent-dim); }
+  .phase-divider { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 12px 16px 4px; }
+
+  /* Content */
+  .content { padding: 24px; overflow-y: auto; }
+  .week-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .week-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; }
+  .week-title small { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 10px; }
+  .week-badge { font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 500; }
+  .recovery-badge { background: var(--phase5-bg); color: var(--phase5); border: 1px solid rgba(167,139,250,0.25); }
+  .peak-badge { background: var(--phase4-bg); color: var(--phase4); border: 1px solid rgba(248,113,113,0.25); }
+
+  /* Day cards */
+  .days-grid { display: flex; flex-direction: column; gap: 8px; }
+  .day-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; transition: border-color 0.15s; }
+  .day-card.done-card { border-color: rgba(200,240,96,0.2); background: rgba(200,240,96,0.04); }
+  .day-card.rest-card { opacity: 0.7; }
+  .day-card.today-card { border-color: rgba(200,240,96,0.45); box-shadow: 0 0 0 1px rgba(200,240,96,0.15); }
+  .day-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .day-name { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); min-width: 32px; }
+  .day-tag { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tag-easy { background: rgba(74,222,128,0.12); color: var(--easy); }
+  .tag-tempo { background: rgba(251,191,36,0.12); color: var(--tempo); }
+  .tag-long { background: rgba(248,113,113,0.12); color: var(--long); }
+  .tag-speed { background: rgba(96,165,250,0.12); color: var(--speed); }
+  .tag-rest { background: rgba(107,114,128,0.12); color: var(--rest); }
+  .today-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.06em; background: var(--accent-dim2); color: var(--accent); border: 1px solid rgba(200,240,96,0.35); }
+  .day-desc { font-size: 13px; color: var(--text); line-height: 1.5; flex: 1; min-width: 180px; }
+
+  /* Logging area */
+  .day-actions { margin-top: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .log-area { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; align-items: center; }
+  .log-field-group { display: flex; flex-direction: column; gap: 3px; }
+  .log-field-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .log-input { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; padding: 5px 10px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); width: 80px; }
+  .log-input:focus { outline: none; border-color: var(--accent); }
+  .log-input::placeholder { color: var(--muted); }
+  .log-note { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; padding: 5px 10px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); flex: 1; min-width: 120px; }
+  .log-note:focus { outline: none; border-color: var(--accent); }
+  .log-note::placeholder { color: var(--muted); }
+  .pace-display { font-size: 11px; color: var(--accent); background: var(--accent-dim); border-radius: 5px; padding: 5px 9px; white-space: nowrap; align-self: flex-end; margin-bottom: 1px; }
+  .btn-done { padding: 5px 14px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid var(--border2); background: var(--surface2); color: var(--muted); font-family: 'DM Mono', monospace; transition: all 0.15s; letter-spacing: 0.03em; white-space: nowrap; }
+  .btn-done:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-done.active { background: var(--accent-dim2); border-color: var(--accent); color: var(--accent); }
+  .done-label { font-size: 11px; color: var(--accent); display: flex; align-items: center; gap: 4px; }
+  .logged-summary { font-size: 11px; color: var(--muted); margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .logged-summary span { color: var(--accent); }
+
+  /* Weekly summary */
+  .week-summary { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; margin-bottom: 16px; display: flex; gap: 20px; flex-wrap: wrap; }
+  .sum-item .sum-val { font-size: 18px; font-weight: 500; color: var(--accent); }
+  .sum-item .sum-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+  .sum-bar-wrap { flex: 1; min-width: 120px; }
+  .sum-bar-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .sum-bar-track { height: 4px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .sum-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.4s; }
+
+  /* Note for no week selected */
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; gap: 12px; color: var(--muted); }
+  .empty-state .big { font-family: 'Fraunces', serif; font-size: 48px; font-style: italic; color: var(--border2); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+  @media (max-width: 640px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 220px; }
+    .header h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>Your <span>Marathon</span><br>Training Plan</h1>
+      <div class="header-meta">March 2026 → December 2026 · 5 days/week</div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-pill"><div class="val" id="statWeeks">0</div><div class="lbl">Weeks done</div></div>
+      <div class="stat-pill"><div class="val" id="statKm">0</div><div class="lbl">km logged</div></div>
+      <div class="stat-pill"><div class="val" id="statRuns">0</div><div class="lbl">Runs completed</div></div>
+      <button class="btn-today" onclick="goToToday()">↗ Today</button>
+    </div>
+  </div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-label"><span>Overall progress</span><span id="progressPct">0%</span></div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+</div>
+
+<div class="phase-tabs" id="phaseTabs"></div>
+
+<div class="main">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="content" id="content">
+    <div class="empty-state">
+      <div class="big">42.2</div>
+      <div>Select a week from the sidebar to get started</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────
+const PHASES = [
+  { id:1, name:'Base Building', color:'#4ade80', weeks:8, startKm:35, endKm:55, months:'Mar–May' },
+  { id:2, name:'Aerobic Dev.', color:'#60a5fa', weeks:8, startKm:55, endKm:70, months:'May–Jul' },
+  { id:3, name:'Marathon Pace', color:'#fbbf24', weeks:8, startKm:65, endKm:80, months:'Jul–Sep' },
+  { id:4, name:'Peak Training', color:'#f87171', weeks:8, startKm:70, endKm:85, months:'Sep–Nov' },
+  { id:5, name:'Taper & Race', color:'#a78bfa', weeks:8, startKm:25, endKm:55, months:'Nov–Dec' },
+];
+
+const DAY_TEMPLATES = {
+  1: [
+    { day:'Mon', type:'rest', desc:'Rest or light cross-training — yoga, swimming, or a gentle walk.' },
+    { day:'Tue', type:'easy', desc:'Easy run 8 km at comfortable conversation pace. If you can\'t hold a sentence, slow down.' },
+    { day:'Wed', type:'speed', desc:'Strides session — 5 km easy then 6 × 100m strides with full recovery between each.' },
+    { day:'Thu', type:'easy', desc:'Easy run 7 km + 20 min core strength work (planks, glute bridges, dead bugs).' },
+    { day:'Fri', type:'rest', desc:'Rest. Prioritise sleep — this is when your body adapts.' },
+    { day:'Sat', type:'tempo', desc:'Tempo run: 3 km warm-up + 4 km at comfortably hard effort + 3 km cool-down.' },
+    { day:'Sun', type:'long', desc:'Long run 13 km at easy effort. No GPS pressure — just time on feet.' },
+  ],
+  2: [
+    { day:'Mon', type:'rest', desc:'Rest or yoga/stretching session.' },
+    { day:'Tue', type:'easy', desc:'Easy run 10 km. Build your aerobic base — keep the effort genuinely easy.' },
+    { day:'Wed', type:'speed', desc:'Track intervals: 6 × 800m at 10K pace with 90 sec jog recovery.' },
+    { day:'Thu', type:'easy', desc:'Recovery run 8 km — very slow, flush the legs from yesterday.' },
+    { day:'Fri', type:'easy', desc:'Easy run 8 km + strength training (single-leg squats, calf raises).' },
+    { day:'Sat', type:'tempo', desc:'Tempo 10 km: 2 km warm-up + 6 km at lactate threshold + 2 km cool-down.' },
+    { day:'Sun', type:'long', desc:'Long run 17 km. Focus on even pacing and good form in the final 4 km.' },
+  ],
+  3: [
+    { day:'Mon', type:'rest', desc:'Full rest — protect recovery after the long run.' },
+    { day:'Tue', type:'easy', desc:'Easy run 14 km — aerobic base maintenance.' },
+    { day:'Wed', type:'speed', desc:'Marathon pace intervals: 3 × 5 km at goal marathon pace, 3 min jog between each.' },
+    { day:'Thu', type:'easy', desc:'Recovery run 8 km very easy + mobility work and hip flexor stretches.' },
+    { day:'Fri', type:'tempo', desc:'Tempo 12 km: 2 warm-up + 8 km at lactate threshold + 2 cool-down.' },
+    { day:'Sat', type:'easy', desc:'Easy 6 km shakeout + strength training.' },
+    { day:'Sun', type:'long', desc:'Long run 25 km — run final 8 km at marathon pace (progression run).' },
+  ],
+  4: [
+    { day:'Mon', type:'rest', desc:'Full rest. No "just a short one" — the rest is the training.' },
+    { day:'Tue', type:'easy', desc:'Easy run 16 km. Keep it truly easy — you\'ll need the legs for Sunday.' },
+    { day:'Wed', type:'speed', desc:'Race-pace workout: 2 × 10 km at marathon goal pace with 5 min rest.' },
+    { day:'Thu', type:'easy', desc:'Recovery run 8 km + foam rolling every major muscle group.' },
+    { day:'Fri', type:'tempo', desc:'Tempo 13 km: 2 warm-up + 9 km threshold + 2 cool-down.' },
+    { day:'Sat', type:'easy', desc:'Easy 8 km + strength training.' },
+    { day:'Sun', type:'long', desc:'Long run 32 km — your longest run of the entire plan. Fuel every 45 min.' },
+  ],
+  5: [
+    { day:'Mon', type:'rest', desc:'Full rest. Trust the taper — resist the urge to do more.' },
+    { day:'Tue', type:'easy', desc:'Easy run 10 km — enjoy the reduced load, legs should feel springy.' },
+    { day:'Wed', type:'speed', desc:'Short sharpener: 4 × 1 km at 10K pace. Stay sharp, don\'t fatigue.' },
+    { day:'Thu', type:'easy', desc:'Easy run 8 km + light stretching.' },
+    { day:'Fri', type:'rest', desc:'Rest or a very light 20 min jog to stay loose.' },
+    { day:'Sat', type:'tempo', desc:'Tune-up 8 km: 2 easy + 4 km at marathon pace + 2 easy.' },
+    { day:'Sun', type:'long', desc:'Long run 18 km — relaxed, confident. The hay is in the barn.' },
+  ],
+};
+
+// ── Generate weeks ────────────────────────────────────────────────────────
+let weeks = [];
+let wNum = 0;
+PHASES.forEach((p, pi) => {
+  for (let w = 0; w < p.weeks; w++) {
+    wNum++;
+    const isRecovery = (w + 1) % 4 === 0;
+    const isPeak = pi === 3 && w === 6;
+    const t = p.weeks > 1 ? w / (p.weeks - 1) : 0;
+    let km = Math.round(p.startKm + t * (p.endKm - p.startKm));
+    if (isRecovery) km = Math.round(km * 0.78);
+    const template = DAY_TEMPLATES[p.id];
+    weeks.push({ num: wNum, phase: p.id, km, isRecovery, isPeak, template });
+  }
+});
+
+// ── Today detection ───────────────────────────────────────────────────────
+// Plan starts Monday March 2, 2026 (Week 1, Day 0 = Monday)
+const START_DATE = new Date('2026-03-02T00:00:00');
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const daysSinceStart = Math.floor((today - START_DATE) / (1000 * 60 * 60 * 24));
+const totalPlanDays = 40 * 7;
+const isTodayInPlan = daysSinceStart >= 0 && daysSinceStart < totalPlanDays;
+const currentWeekNum = isTodayInPlan ? Math.min(40, Math.floor(daysSinceStart / 7) + 1) : 1;
+const currentDayIdx = isTodayInPlan ? (daysSinceStart % 7) : -1;
+
+// ── Storage ───────────────────────────────────────────────────────────────
+const STORE_KEY = 'marathon_tracker_v1';
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { return {}; }
+}
+function save(data) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch {}
+}
+let store = load();
+
+function getDay(weekNum, dayIdx) {
+  return store[`w${weekNum}_d${dayIdx}`] || { done: false, km: '', mins: '', note: '' };
+}
+function setDay(weekNum, dayIdx, data) {
+  store[`w${weekNum}_d${dayIdx}`] = data;
+  save(store);
+}
+
+// ── Pace helper ───────────────────────────────────────────────────────────
+function calcPace(km, mins) {
+  const k = parseFloat(km);
+  const m = parseFloat(mins);
+  if (!k || !m || k <= 0) return null;
+  const paceTotal = m / k; // min per km
+  const pMin = Math.floor(paceTotal);
+  const pSec = Math.round((paceTotal - pMin) * 60);
+  return `${pMin}:${String(pSec).padStart(2,'0')} /km`;
+}
+
+// ── State ─────────────────────────────────────────────────────────────────
+let activePhase = 1;
+let activeWeek = 1;
+
+// ── Stats ─────────────────────────────────────────────────────────────────
+function computeStats() {
+  let totalKm = 0, totalRuns = 0, weeksCompleted = 0;
+  weeks.forEach(w => {
+    let doneCount = 0;
+    w.template.forEach((d, i) => {
+      const day = getDay(w.num, i);
+      if (day.done) {
+        doneCount++;
+        totalRuns++;
+        const km = parseFloat(day.km) || 0;
+        totalKm += km;
+      }
+    });
+    const nonRest = w.template.filter(d => d.type !== 'rest').length;
+    if (doneCount >= nonRest && nonRest > 0) weeksCompleted++;
+  });
+  const totalDays = weeks.reduce((s, w) => s + w.template.filter(d => d.type !== 'rest').length, 0);
+  const pct = totalRuns > 0 ? Math.round((totalRuns / totalDays) * 100) : 0;
+  document.getElementById('statWeeks').textContent = weeksCompleted;
+  document.getElementById('statKm').textContent = Math.round(totalKm);
+  document.getElementById('statRuns').textContent = totalRuns;
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const el = document.getElementById('sidebar');
+  let html = '';
+  let lastPhase = 0;
+  weeks.forEach(w => {
+    const p = PHASES[w.phase - 1];
+    if (w.phase !== lastPhase) {
+      html += `<div class="phase-divider" style="color:${p.color}">${p.name}</div>`;
+      lastPhase = w.phase;
+    }
+    let doneCount = 0;
+    w.template.forEach((d, i) => { if (getDay(w.num, i).done) doneCount++; });
+    const nonRest = w.template.filter(d => d.type !== 'rest').length;
+    const allDone = doneCount >= nonRest && nonRest > 0;
+    const partial = doneCount > 0 && !allDone;
+    const isCurrentWeek = w.num === currentWeekNum && isTodayInPlan;
+    const todayDot = isCurrentWeek ? `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-left:4px;vertical-align:middle;"></span>` : '';
+    html += `<div class="week-item ${activeWeek === w.num ? 'active' : ''} ${allDone ? 'completed' : ''} ${isCurrentWeek ? 'current-week' : ''}" onclick="selectWeek(${w.num})">
+      <span class="week-num">W${w.num}</span>
+      <div class="week-label">
+        <div class="wname" style="color:${activeWeek===w.num?'var(--text)':'inherit'}">${w.isRecovery ? '↓ Recovery' : w.isPeak ? '⬆ Peak' : 'Week ' + w.num}${todayDot}</div>
+        <div class="wkm">${w.km} km</div>
+      </div>
+      <div class="week-check ${allDone ? 'done' : partial ? 'partial' : ''}">
+        ${allDone ? '✓' : ''}
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ── Week content ──────────────────────────────────────────────────────────
+const TYPE_LABELS = { easy:'Easy', tempo:'Tempo', long:'Long run', speed:'Speed', rest:'Rest' };
+
+function renderWeek(weekNum) {
+  const w = weeks.find(x => x.num === weekNum);
+  if (!w) return;
+  const p = PHASES[w.phase - 1];
+  const isThisWeek = weekNum === currentWeekNum && isTodayInPlan;
+
+  let doneKm = 0, doneRuns = 0;
+  w.template.forEach((d, i) => {
+    const day = getDay(weekNum, i);
+    if (day.done) { doneRuns++; doneKm += parseFloat(day.km) || 0; }
+  });
+  const nonRest = w.template.filter(d => d.type !== 'rest').length;
+  const pct = nonRest > 0 ? Math.round((doneRuns / nonRest) * 100) : 0;
+
+  let badge = '';
+  if (w.isRecovery) badge = `<span class="week-badge recovery-badge">Recovery week</span>`;
+  if (w.isPeak) badge = `<span class="week-badge peak-badge">Peak week</span>`;
+
+  let daysHtml = '';
+  w.template.forEach((d, i) => {
+    const day = getDay(weekNum, i);
+    const isRest = d.type === 'rest';
+    const isToday = isThisWeek && i === currentDayIdx;
+    const pace = calcPace(day.km, day.mins);
+
+    let loggedSummary = '';
+    if (day.done && (day.km || day.mins)) {
+      const parts = [];
+      if (day.km) parts.push(`<span>${day.km} km</span>`);
+      if (day.mins) parts.push(`<span>${day.mins} min</span>`);
+      if (pace) parts.push(`<span>${pace}</span>`);
+      if (day.note) parts.push(`"${day.note}"`);
+      loggedSummary = `<div class="logged-summary">${parts.join(' · ')}</div>`;
+    }
+
+    daysHtml += `
+    <div class="day-card ${day.done ? 'done-card' : ''} ${isRest ? 'rest-card' : ''} ${isToday ? 'today-card' : ''}" id="daycard-${weekNum}-${i}">
+      <div class="day-top">
+        <span class="day-name">${d.day}</span>
+        <span class="day-tag tag-${d.type}">${TYPE_LABELS[d.type]}</span>
+        ${isToday ? `<span class="today-badge">Today</span>` : ''}
+        <span class="day-desc">${d.desc}</span>
+      </div>
+      ${!isRest ? `<div class="day-actions">
+        <div class="log-area">
+          <div class="log-field-group">
+            <div class="log-field-label">Distance</div>
+            <input class="log-input" type="number" placeholder="km" value="${day.km}" min="0" step="0.1"
+              oninput="logField(${weekNum},${i},'km',this.value)" />
+          </div>
+          <div class="log-field-group">
+            <div class="log-field-label">Duration</div>
+            <input class="log-input" type="number" placeholder="min" value="${day.mins}" min="0" step="1"
+              oninput="logField(${weekNum},${i},'mins',this.value)" />
+          </div>
+          ${pace ? `<div class="pace-display">${pace}</div>` : ''}
+          <div class="log-field-group" style="flex:1">
+            <div class="log-field-label">Notes</div>
+            <input class="log-note" type="text" placeholder="how did it feel?" value="${day.note}"
+              oninput="logField(${weekNum},${i},'note',this.value)" />
+          </div>
+        </div>
+        <button class="btn-done ${day.done ? 'active' : ''}" onclick="toggleDone(${weekNum},${i})">
+          ${day.done ? '✓ Done' : 'Mark done'}
+        </button>
+      </div>
+      ${loggedSummary}` : `<div class="day-actions"><span class="done-label" style="font-size:11px;color:var(--muted)">Rest — no logging needed</span></div>`}
+    </div>`;
+  });
+
+  document.getElementById('content').innerHTML = `
+    <div class="week-header">
+      <div>
+        <div class="week-title">Week ${weekNum} <small style="color:${p.color}">${p.name}</small></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${badge}
+        <span style="font-size:12px;color:var(--muted)">${w.km} km planned</span>
+      </div>
+    </div>
+    <div class="week-summary">
+      <div class="sum-item"><div class="sum-val">${Math.round(doneKm)}</div><div class="sum-lbl">km logged</div></div>
+      <div class="sum-item"><div class="sum-val">${doneRuns}/${nonRest}</div><div class="sum-lbl">runs done</div></div>
+      <div class="sum-bar-wrap">
+        <div class="sum-bar-label"><span>Week progress</span><span>${pct}%</span></div>
+        <div class="sum-bar-track"><div class="sum-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>
+    <div class="days-grid">${daysHtml}</div>
+  `;
+
+  // Scroll today's card into view if in this week
+  if (isThisWeek) {
+    setTimeout(() => {
+      const todayCard = document.querySelector('.today-card');
+      if (todayCard) todayCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 80);
+  }
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────
+function selectWeek(num) {
+  activeWeek = num;
+  const w = weeks.find(x => x.num === num);
+  if (w) activePhase = w.phase;
+  renderSidebar();
+  renderWeek(num);
+  renderPhaseTabs();
+}
+
+function goToToday() {
+  if (isTodayInPlan) {
+    selectWeek(currentWeekNum);
+  }
+}
+
+function toggleDone(weekNum, dayIdx) {
+  const day = getDay(weekNum, dayIdx);
+  day.done = !day.done;
+  setDay(weekNum, dayIdx, day);
+  renderWeek(weekNum);
+  renderSidebar();
+  computeStats();
+}
+
+function logField(weekNum, dayIdx, field, value) {
+  const day = getDay(weekNum, dayIdx);
+  day[field] = value;
+  setDay(weekNum, dayIdx, day);
+
+  // Update pace display live
+  const pace = calcPace(day.km, day.mins);
+  const cardEl = document.getElementById(`daycard-${weekNum}-${dayIdx}`);
+  if (cardEl) {
+    let paceEl = cardEl.querySelector('.pace-display');
+    if (pace) {
+      if (paceEl) {
+        paceEl.textContent = pace;
+      } else {
+        // Insert pace display after the mins field group
+        const logArea = cardEl.querySelector('.log-area');
+        if (logArea) {
+          const minsGroup = logArea.querySelectorAll('.log-field-group')[1];
+          if (minsGroup) {
+            const newPace = document.createElement('div');
+            newPace.className = 'pace-display';
+            newPace.textContent = pace;
+            minsGroup.after(newPace);
+          }
+        }
+      }
+    } else if (paceEl) {
+      paceEl.remove();
+    }
+  }
+
+  // Refresh summary
+  const w = weeks.find(x => x.num === weekNum);
+  let doneKm = 0, doneRuns = 0;
+  w.template.forEach((d, i) => {
+    const d2 = getDay(weekNum, i);
+    if (d2.done) { doneRuns++; doneKm += parseFloat(d2.km) || 0; }
+  });
+  const nonRest = w.template.filter(d => d.type !== 'rest').length;
+  const pct = nonRest > 0 ? Math.round((doneRuns / nonRest) * 100) : 0;
+  const sumEl = document.querySelector('.week-summary');
+  if (sumEl) {
+    sumEl.querySelector('.sum-item .sum-val').textContent = Math.round(doneKm);
+    sumEl.querySelectorAll('.sum-item')[1].querySelector('.sum-val').textContent = `${doneRuns}/${nonRest}`;
+    sumEl.querySelector('.sum-bar-fill').style.width = pct + '%';
+    sumEl.querySelector('.sum-bar-label span:last-child').textContent = pct + '%';
+  }
+  computeStats();
+}
+
+// ── Phase tabs ────────────────────────────────────────────────────────────
+function renderPhaseTabs() {
+  const el = document.getElementById('phaseTabs');
+  el.innerHTML = PHASES.map(p => `
+    <div class="phase-tab ${activePhase === p.id ? 'active' : ''}" onclick="switchPhase(${p.id})">
+      <span class="dot" style="background:${activePhase===p.id?'var(--bg)':p.color}"></span>${p.name}
+    </div>
+  `).join('');
+}
+
+function switchPhase(phaseId) {
+  activePhase = phaseId;
+  const firstWeek = weeks.find(w => w.phase === phaseId);
+  if (firstWeek) selectWeek(firstWeek.num);
+  else renderPhaseTabs();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+renderPhaseTabs();
+renderSidebar();
+computeStats();
+selectWeek(currentWeekNum);
+</script>
+
+
+</body></html>
