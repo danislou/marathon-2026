@@ -48,7 +48,7 @@
   .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.6s ease; }
 
   /* Phase tabs */
-  .phase-tabs { display: flex; gap: 4px; padding: 16px 24px 0; overflow-x: auto; }
+  .phase-tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 16px 24px 0; }
   .phase-tab { padding: 7px 14px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; white-space: nowrap; letter-spacing: 0.03em; background: var(--surface2); color: var(--muted); }
   .phase-tab:hover { color: var(--text); }
   .phase-tab.active { color: var(--bg); background: var(--accent); }
@@ -150,7 +150,7 @@
 
     /* Progress + tabs */
     .progress-wrap { padding: 10px 16px; }
-    .phase-tabs { padding: 10px 12px 0; gap: 4px; }
+    .phase-tabs { padding: 10px 16px 0; }
     .phase-tab { padding: 6px 10px; font-size: 10px; }
 
     /* Mobile weeks toggle */
