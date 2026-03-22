@@ -47,16 +47,17 @@
   .progress-track { height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.6s ease; }
 
-  /* Phase tabs */
-  .phase-tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 16px 24px 0; }
-  .phase-tab { padding: 7px 14px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; white-space: nowrap; letter-spacing: 0.03em; background: var(--surface2); color: var(--muted); }
-  .phase-tab:hover { color: var(--text); }
-  .phase-tab.active { color: var(--bg); background: var(--accent); }
-  .phase-tab .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; }
+  /* Nav selects */
+  .nav-selects { display: flex; gap: 8px; padding: 12px 24px; border-bottom: 1px solid var(--border); }
+  .nav-select-wrap { flex: 1; position: relative; }
+  .nav-select-wrap::after { content: '▾'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; font-size: 14px; }
+  .nav-select { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; padding: 9px 28px 9px 12px; cursor: pointer; -webkit-appearance: none; appearance: none; transition: border-color 0.15s; }
+  .nav-select:focus { outline: none; border-color: var(--accent); }
+  .nav-select option { background: #1d1e1b; color: #e8e6df; }
 
   /* Main layout */
-  .main { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 220px); }
-  .sidebar { border-right: 1px solid var(--border); padding: 16px 0; overflow-y: auto; }
+  .main { display: grid; grid-template-columns: 1fr; min-height: calc(100vh - 200px); }
+  .sidebar { display: none; }
   .week-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; transition: background 0.1s; border-left: 2px solid transparent; }
   .week-item:hover { background: var(--surface2); }
   .week-item.active { background: var(--surface2); border-left-color: var(--accent); }
@@ -134,9 +135,6 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
 
-  /* Mobile sidebar toggle — hidden on desktop */
-  .mobile-weeks-toggle { display: none; }
-
   @media (max-width: 640px) {
     /* Header */
     .header { padding: 18px 16px 14px; }
@@ -148,44 +146,12 @@
     .stat-pill .lbl { font-size: 9px; }
     .btn-today { font-size: 10px; padding: 7px 12px; }
 
-    /* Progress + tabs */
+    /* Progress */
     .progress-wrap { padding: 10px 16px; }
-    .phase-tabs { padding: 10px 16px 0; }
-    .phase-tab { padding: 6px 10px; font-size: 10px; }
 
-    /* Mobile weeks toggle */
-    .mobile-weeks-toggle {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
-      background: var(--surface2);
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .mobile-weeks-toggle:active { background: var(--surface); }
-
-    /* Sidebar collapses by default on mobile */
-    .main { grid-template-columns: 1fr; }
-    .sidebar {
-      border-right: none;
-      border-bottom: 1px solid var(--border);
-      max-height: 0;
-      overflow: hidden;
-      padding: 0;
-      transition: max-height 0.3s ease;
-    }
-    .sidebar.mobile-open {
-      max-height: 300px;
-      padding: 8px 0;
-      overflow-y: auto;
-    }
+    /* Nav selects */
+    .nav-selects { padding: 8px 16px; }
+    .nav-select { font-size: 11px; padding: 8px 24px 8px 10px; }
 
     /* Content */
     .content { padding: 16px; }
@@ -198,7 +164,6 @@
     /* Day cards */
     .day-card { padding: 12px; }
     .day-top { gap: 6px; }
-    /* Description always on its own line on mobile */
     .day-desc { min-width: 100%; font-size: 12px; margin-top: 2px; }
 
     /* Log inputs */
@@ -206,8 +171,6 @@
     .log-area { gap: 6px; }
     .log-input { width: 72px; }
     .log-note { min-width: 0; flex: 1 1 100%; }
-
-    /* Larger touch target for Mark Done */
     .btn-done { padding: 10px 16px; width: 100%; text-align: center; min-height: 40px; }
 
     .empty-state .big { font-size: 36px; }
@@ -216,7 +179,7 @@
   @media (max-width: 380px) {
     .header h1 { font-size: 19px; }
     .stat-pill .val { font-size: 14px; }
-    .phase-tab { padding: 5px 8px; font-size: 9px; }
+    .nav-select { font-size: 10px; }
   }
 </style>
 </head>
@@ -242,11 +205,13 @@
   <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
 </div>
 
-<div class="phase-tabs" id="phaseTabs"></div>
-
-<div class="mobile-weeks-toggle" id="mobileWeeksToggle" onclick="toggleMobileSidebar()">
-  <span id="mobileWeeksLabel">▼ All weeks</span>
-  <span id="mobileWeeksActive"></span>
+<div class="nav-selects">
+  <div class="nav-select-wrap">
+    <select id="phaseSelect" class="nav-select" onchange="onPhaseSelect(this.value)"></select>
+  </div>
+  <div class="nav-select-wrap">
+    <select id="weekSelect" class="nav-select" onchange="onWeekSelect(this.value)"></select>
+  </div>
 </div>
 
 <div class="main">
@@ -403,36 +368,39 @@ function computeStats() {
   document.getElementById('progressFill').style.width = pct + '%';
 }
 
-// ── Sidebar ───────────────────────────────────────────────────────────────
-function renderSidebar() {
-  const el = document.getElementById('sidebar');
-  let html = '';
-  let lastPhase = 0;
-  weeks.forEach(w => {
-    const p = PHASES[w.phase - 1];
-    if (w.phase !== lastPhase) {
-      html += `<div class="phase-divider" style="color:${p.color}">${p.name}</div>`;
-      lastPhase = w.phase;
-    }
-    let doneCount = 0;
-    w.template.forEach((d, i) => { if (getDay(w.num, i).done) doneCount++; });
-    const nonRest = w.template.filter(d => d.type !== 'rest').length;
-    const allDone = doneCount >= nonRest && nonRest > 0;
-    const partial = doneCount > 0 && !allDone;
-    const isCurrentWeek = w.num === currentWeekNum && isTodayInPlan;
-    const todayDot = isCurrentWeek ? `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-left:4px;vertical-align:middle;"></span>` : '';
-    html += `<div class="week-item ${activeWeek === w.num ? 'active' : ''} ${allDone ? 'completed' : ''} ${isCurrentWeek ? 'current-week' : ''}" onclick="selectWeek(${w.num})">
-      <span class="week-num">W${w.num}</span>
-      <div class="week-label">
-        <div class="wname" style="color:${activeWeek===w.num?'var(--text)':'inherit'}">${w.isRecovery ? '↓ Recovery' : w.isPeak ? '⬆ Peak' : 'Week ' + w.num}${todayDot}</div>
-        <div class="wkm">${w.km} km</div>
-      </div>
-      <div class="week-check ${allDone ? 'done' : partial ? 'partial' : ''}">
-        ${allDone ? '✓' : ''}
-      </div>
-    </div>`;
-  });
-  el.innerHTML = html;
+// ── Nav selects ───────────────────────────────────────────────────────────
+function renderNavSelects() {
+  const phaseEl = document.getElementById('phaseSelect');
+  const weekEl = document.getElementById('weekSelect');
+
+  phaseEl.innerHTML = `<option value="0">All phases</option>` +
+    PHASES.map(p => `<option value="${p.id}"${activePhase === p.id ? ' selected' : ''}>${p.name} · ${p.months}</option>`).join('');
+
+  const visibleWeeks = activePhase ? weeks.filter(w => w.phase === activePhase) : weeks;
+  weekEl.innerHTML = visibleWeeks.map(w => {
+    const label = w.isRecovery ? `W${w.num} · Recovery · ${w.km} km` :
+                  w.isPeak    ? `W${w.num} · Peak · ${w.km} km` :
+                                `Week ${w.num} · ${w.km} km`;
+    return `<option value="${w.num}"${activeWeek === w.num ? ' selected' : ''}>${label}</option>`;
+  }).join('');
+}
+
+function onPhaseSelect(val) {
+  const phaseId = parseInt(val);
+  activePhase = phaseId;
+  const firstWeek = phaseId > 0
+    ? weeks.find(w => w.phase === phaseId)
+    : weeks.find(w => w.num === activeWeek) ? weeks.find(w => w.num === activeWeek) : weeks[0];
+  if (firstWeek) {
+    activeWeek = phaseId > 0 ? firstWeek.num : activeWeek;
+    renderWeek(activeWeek);
+  }
+  renderNavSelects();
+}
+
+function onWeekSelect(val) {
+  const weekNum = parseInt(val);
+  if (weekNum > 0) selectWeek(weekNum);
 }
 
 // ── Week content ──────────────────────────────────────────────────────────
@@ -543,13 +511,8 @@ function selectWeek(num) {
   activeWeek = num;
   const w = weeks.find(x => x.num === num);
   if (w) activePhase = w.phase;
-  renderSidebar();
+  renderNavSelects();
   renderWeek(num);
-  renderPhaseTabs();
-  // Update mobile active indicator and close sidebar
-  const activeEl = document.getElementById('mobileWeeksActive');
-  if (activeEl) activeEl.textContent = `W${num}`;
-  if (window.innerWidth <= 640) closeMobileSidebar();
 }
 
 function goToToday() {
@@ -563,7 +526,6 @@ function toggleDone(weekNum, dayIdx) {
   day.done = !day.done;
   setDay(weekNum, dayIdx, day);
   renderWeek(weekNum);
-  renderSidebar();
   computeStats();
 }
 
@@ -617,42 +579,7 @@ function logField(weekNum, dayIdx, field, value) {
   computeStats();
 }
 
-// ── Phase tabs ────────────────────────────────────────────────────────────
-function renderPhaseTabs() {
-  const el = document.getElementById('phaseTabs');
-  el.innerHTML = PHASES.map(p => `
-    <div class="phase-tab ${activePhase === p.id ? 'active' : ''}" onclick="switchPhase(${p.id})">
-      <span class="dot" style="background:${activePhase===p.id?'var(--bg)':p.color}"></span>${p.name}
-    </div>
-  `).join('');
-}
-
-function switchPhase(phaseId) {
-  activePhase = phaseId;
-  const firstWeek = weeks.find(w => w.phase === phaseId);
-  if (firstWeek) selectWeek(firstWeek.num);
-  else renderPhaseTabs();
-}
-
-// ── Mobile sidebar toggle ─────────────────────────────────────────────────
-function toggleMobileSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const label = document.getElementById('mobileWeeksLabel');
-  sidebar.classList.toggle('mobile-open');
-  label.textContent = sidebar.classList.contains('mobile-open') ? '▲ All weeks' : '▼ All weeks';
-}
-
-function closeMobileSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  if (sidebar.classList.contains('mobile-open')) {
-    sidebar.classList.remove('mobile-open');
-    document.getElementById('mobileWeeksLabel').textContent = '▼ All weeks';
-  }
-}
-
 // ── Init ──────────────────────────────────────────────────────────────────
-renderPhaseTabs();
-renderSidebar();
 computeStats();
 selectWeek(currentWeekNum);
 </script>
