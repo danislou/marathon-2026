@@ -341,7 +341,7 @@ export default function Page() {
         </div>
       </div>
 
-      <Agentation endpoint={process.env.NEXT_PUBLIC_AGENTATION_ENDPOINT ?? 'http://localhost:4747'} />
+      {process.env.NODE_ENV === 'development' && <Agentation endpoint="http://localhost:4747" />}
     </>
   )
 }
